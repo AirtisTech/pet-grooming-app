@@ -1,0 +1,38 @@
+{
+  "name": "PetGroom - 宠物美容平台",
+  "short_name": "PetGroom",
+  "description": "宠物美容预约平台，撮合宠物主人与宠物美容师",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#667eea",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["lifestyle", "shopping"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "发布订单",
+      "short_name": "下单",
+      "url": "/orders/new",
+      "description": "发布新的美容订单"
+    },
+    {
+      "name": "浏览美容师",
+      "short_name": "美容师",
+      "url": "/groomers",
+      "description": "浏览可用的美容师"
+    }
+  ]
+}
