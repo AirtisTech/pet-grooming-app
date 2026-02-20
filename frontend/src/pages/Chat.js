@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import socketService from '../services/socket';
 
 function Chat() {
   const { conversationId } = useParams();
@@ -14,28 +15,26 @@ function Chat() {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  useEffect(() => {
-    if (conversationId) {
-      loadMessages();
-      // Connect to socket for real-time updates
-      const socket = window.socket; // Assume socket is initialized
-      if (socket) {
-        socket.on('new_message', handleNewMessage);
-      }
-    }
-    return () => {
-      if (socket) {
-        socket.off('new_message', handleNewMessage);
-      }
-    };
-  }, [conversationId]);
-
-  const handleNewMessage = (message) => {
+  // Handle new incoming messages
+  const handleNewMessage = useCallback((message) => {
     if (message.conversationId === conversationId) {
       setMessages(prev => [...prev, message]);
       scrollToBottom();
     }
-  };
+  }, [conversationId]);
+
+  useEffect(() => {
+    if (conversationId) {
+      loadMessages();
+      
+      // Subscribe to socket events
+      const unsubscribe = socketService.on('new_message', handleNewMessage);
+      
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, [conversationId, handleNewMessage]);
 
   const loadMessages = async () => {
     setLoading(true);
@@ -51,7 +50,9 @@ function Chat() {
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
 
   const sendMessage = async (e) => {
@@ -67,6 +68,9 @@ function Chat() {
       setMessages(prev => [...prev, res.data.message]);
       setNewMessage('');
       scrollToBottom();
+      
+      // Focus input after sending
+      inputRef.current?.focus();
     } catch (error) {
       console.error('Send message error:', error);
     } finally {
@@ -106,6 +110,30 @@ function Chat() {
     return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
   };
 
+  const formatDate = (date) => {
+    const d = new Date(date);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (d.toDateString() === today.toDateString()) {
+      return '今天';
+    } else if (d.toDateString() === yesterday.toDateString()) {
+      return '昨天';
+    }
+    return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+  };
+
+  // Group messages by date
+  const groupedMessages = messages.reduce((groups, message) => {
+    const date = new Date(message.createdAt).toDateString();
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(message);
+    return groups;
+  }, {});
+
   return (
     <div className="chat-page">
       <header className="chat-header">
@@ -123,24 +151,40 @@ function Chat() {
             <p className="hint">开始对话吧!</p>
           </div>
         ) : (
-          messages.map((msg, index) => {
-            const isMe = msg.senderId?._id === user?.id || msg.senderId === user?.id;
-            return (
-              <div key={index} className={`message ${isMe ? 'sent' : 'received'}`}>
-                <div className="message-bubble">
-                  {msg.type === 'location' ? (
-                    <div className="location-message">
-                      <span>📍</span>
-                      <span>{msg.metadata?.address || '位置信息'}</span>
-                    </div>
-                  ) : (
-                    msg.message
-                  )}
-                </div>
-                <div className="message-time">{formatTime(msg.createdAt)}</div>
+          Object.entries(groupedMessages).map(([date, dateMessages]) => (
+            <div key={date}>
+              <div className="date-divider">
+                <span>{formatDate(dateMessages[0].createdAt)}</span>
               </div>
-            );
-          })
+              {dateMessages.map((msg, index) => {
+                const isMe = msg.senderId?._id === user?.id || 
+                             msg.senderId === user?.id || 
+                             msg.senderId === user?._id;
+                return (
+                  <div key={index} className={`message ${isMe ? 'sent' : 'received'}`}>
+                    <div className="message-bubble">
+                      {msg.type === 'location' ? (
+                        <div className="location-message">
+                          <span>📍</span>
+                          <span>{msg.metadata?.address || '位置信息'}</span>
+                        </div>
+                      ) : msg.type === 'image' ? (
+                        <img 
+                          src={msg.metadata?.url} 
+                          alt="图片" 
+                          className="message-image"
+                          onLoad={scrollToBottom}
+                        />
+                      ) : (
+                        msg.message
+                      )}
+                    </div>
+                    <div className="message-time">{formatTime(msg.createdAt)}</div>
+                  </div>
+                );
+              })}
+            </div>
+          ))
         )}
         <div ref={messagesEndRef} />
       </div>

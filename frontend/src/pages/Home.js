@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ordersAPI } from '../services/api';
+import NotificationBell from '../components/NotificationBell';
 
 function Home() {
   const { user, logout } = useAuth();
@@ -31,6 +32,7 @@ function Home() {
           <h1>🐾 PetGroom</h1>
         </div>
         <div className="header-right">
+          <NotificationBell />
           <Link to="/profile" className="user-info">
             <span className="avatar">{user?.name?.[0]}</span>
             <span>{user?.name}</span>
@@ -84,6 +86,14 @@ function Home() {
                 <div className="card-text">
                   <h3>新订单</h3>
                   <p>查看可接订单</p>
+                </div>
+              </Link>
+              
+              <Link to="/messages" className="action-card">
+                <div className="card-icon">💬</div>
+                <div className="card-text">
+                  <h3>消息</h3>
+                  <p>与用户聊天</p>
                 </div>
               </Link>
             </>
