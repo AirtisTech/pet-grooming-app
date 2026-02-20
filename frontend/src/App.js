@@ -11,6 +11,8 @@ import OrderList from './pages/OrderList';
 import GroomerList from './pages/GroomerList';
 import GroomerProfile from './pages/GroomerProfile';
 import MyProfile from './pages/MyProfile';
+import Chat from './pages/Chat';
+import ConversationList from './pages/ConversationList';
 
 function App() {
   const { user, loading } = useAuth();
@@ -38,6 +40,8 @@ function App() {
         <Route path="/groomers" element={user ? <GroomerList /> : <Navigate to="/login" />} />
         <Route path="/groomers/:id" element={user ? <GroomerProfile /> : <Navigate to="/login" />} />
         <Route path="/profile" element={user ? <MyProfile /> : <Navigate to="/login" />} />
+        <Route path="/messages" element={user ? <ConversationList /> : <Navigate to="/login" />} />
+        <Route path="/chat/:conversationId" element={user ? <Chat /> : <Navigate to="/login" />} />
       </Routes>
     </div>
   );

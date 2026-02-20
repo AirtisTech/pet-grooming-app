@@ -34,6 +34,8 @@ app.use('/api/groomers', groomerRoutes);
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/payments', require('./routes/payments'));
+app.use('/api/chat', require('./routes/chat'));
+app.use('/api/location', require('./routes/location'));
 
 // Health Check
 app.get('/api/health', (req, res) => {
